@@ -14,7 +14,7 @@ This Python script uses the boto3 library to interact with Amazon Web Services (
 1. Install the required Python libraries with pip:
 
 ```bash
-pip install boto3 python-dotenv
+pip install setup.py
 ```
 
 2. Create a `.env` file in the same directory as the script, and add your AWS credentials and region:
