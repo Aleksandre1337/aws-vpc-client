@@ -39,6 +39,7 @@ The script provides several command-line arguments for different operations:
 - `--tag RESOURCE_ID RESOURCE_NAME`: Add a name tag to a resource.
 - `--create-igw`: Create a new Internet Gateway.
 - `--attach-igw VPC_ID IGW_ID`: Attach an Internet Gateway to a VPC.
+- `--create-subnets VPC_ID PUBLIC_CIDR_BLOCK PRIVATE_CIDR_BLOCK`: Create subnets in a VPC. Arguments are the VPC ID, the CIDR block for the public subnet, and the CIDR block for the private subnet.
 
 Example usage:
 

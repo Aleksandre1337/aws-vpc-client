@@ -21,6 +21,7 @@ ec2_client = boto3.client(
 def list_vpcs(vpc_id):
   if vpc_id:
     response = ec2_client.describe_vpcs(VpcIds=[vpc_id])
+    print(response)
   else:
     response = ec2_client.describe_vpcs()
 
@@ -61,6 +62,7 @@ def validate_cidr_block(value):
 def create_vpc(CidrBlock):
     try:
         response = ec2_client.create_vpc(CidrBlock=str(CidrBlock))
+        response.wait_until_available()
         vpc = response.get("Vpc")
 
         vpc_id = vpc.get('VpcId')
@@ -81,6 +83,30 @@ def create_vpc(CidrBlock):
 
     except ClientError as e:
         logging.error(e)
+
+
+def create_subnets(vpc_id, public_cidr_block, private_cidr_block):
+  try:
+      # Validate the CIDR blocks
+      public_cidr_block = validate_cidr_block(public_cidr_block)
+      private_cidr_block = validate_cidr_block(private_cidr_block)
+
+      # Create the route table
+      rt_public = ec2_client.create_route_table(VpcId=vpc_id)
+      print(f'Public Route Table Created with ID: {rt_public["RouteTable"]["RouteTableId"]}')
+
+      # Create the public subnet
+      subnet_public = ec2_client.create_subnet(CidrBlock=public_cidr_block, VpcId=vpc_id)
+      print(f"Public Subnet Created with ID: {subnet_public['Subnet']['SubnetId']}")
+
+      # Create the private subnet
+      subnet_private = ec2_client.create_subnet(CidrBlock=private_cidr_block, VpcId=vpc_id)
+      print(f"Private Subnet Created with ID: {subnet_private['Subnet']['SubnetId']}")
+
+      return vpc_id, subnet_public['Subnet']['SubnetId'], subnet_private['Subnet']['SubnetId']
+  except ClientError as e:
+      print(f"An error occurred: {e}")
+
 
 def add_name_tag(resource_id, resource_name):
   try:
@@ -116,6 +142,7 @@ def argument_list():
   parser.add_argument("--list", nargs='?', const=None, default=False, help="List VPCs. Provide VPC ID to list a specific VPC.")
   parser.add_argument("--create", nargs=1, help="Create VPC by entering a CIDR Block", type=validate_cidr_block)
   parser.add_argument("--tag", nargs=2, help="Add a Name tag to a VPC, IGW and other resources", type=str)
+  parser.add_argument("--create-subnets", nargs=3, help="Create Subnets in a VPC, arguments: vpc_id, public_cidr_block, private_cidr_block", type=str)
   parser.add_argument("--create-igw", help="Create an Internet Gateway", action="store_true")
   parser.add_argument("--attach-igw", nargs=2, help="Attach an Internet Gateway to a VPC")
   return parser.parse_args()
@@ -131,6 +158,8 @@ def main():
       create_igw()
   elif args.attach_igw:
       attach_igw_to_vpc(args.attach_igw[0], args.attach_igw[1])
+  elif args.create_subnets:
+      create_subnets(args.create_subnets[0], args.create_subnets[1], args.create_subnets[2])
 
 if __name__ == "__main__":
     args = argument_list()
