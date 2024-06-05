@@ -40,6 +40,8 @@ The script provides several command-line arguments for different operations:
 - `--create-igw`: Create a new Internet Gateway.
 - `--attach-igw VPC_ID IGW_ID`: Attach an Internet Gateway to a VPC.
 - `--create-subnets VPC_ID PUBLIC_CIDR_BLOCK PRIVATE_CIDR_BLOCK`: Create subnets in a VPC. Arguments are the VPC ID, the CIDR block for the public subnet, and the CIDR block for the private subnet.
+- `--detach-igw IGW_ID VPC_ID`: This argument detaches an Internet Gateway (IGW) from a Virtual Private Cloud (VPC). It requires two parameters: the ID of the IGW you want to detach and the ID of the VPC from which you want to detach the IGW.
+- `--create-ec2 VPC_ID`: This argument creates an EC2 instance with a security group that allows SSH and HTTP traffic, and a key pair for SSH access. It requires one parameter: the ID of the VPC in which you want to create the EC2 instance.
 
 Example usage:
 
