@@ -43,6 +43,9 @@ The script provides several command-line arguments for different operations:
 - `--detach-igw IGW_ID VPC_ID`: This argument detaches an Internet Gateway (IGW) from a Virtual Private Cloud (VPC). It requires two parameters: the ID of the IGW you want to detach and the ID of the VPC from which you want to detach the IGW.
 - `--create-ec2 VPC_ID`: This argument creates an EC2 instance with a security group that allows SSH and HTTP traffic, and a key pair for SSH access. It requires one parameter: the ID of the VPC in which you want to create the EC2 instance.
 - `--create-rds`: This argument creates an RDS instance with a specific security group that allows MYSQL traffic. It is currently configured for MYSQL, db.m5d.large instance type, 60GB of GP2 Storage and hardcoded credentials. Feel free to adjust it as per your needs.
+- `--modify-rds-storage`: This argument modifies the storage size of an RDS instance. It does not require any additional parameters and is used as a flag to trigger the modification process.
+- `--create-snapshot`: This argument initiates the creation of a snapshot for an RDS instance. It acts as a flag, indicating that a snapshot creation process should be started without needing any extra parameters.
+- `--list-dynamodb`: This argument lists all DynamoDB tables available in the account. It is used as a flag to trigger the listing process, requiring no additional parameters.
 
 Example usage:
 
