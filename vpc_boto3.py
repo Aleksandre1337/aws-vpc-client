@@ -33,6 +33,12 @@ rds_client = boto3.client('rds',
   aws_session_token=getenv("aws_session_token"),
   region_name=getenv("aws_region_name"))
 
+dynamodb_client = boto3.client('dynamodb',
+  aws_access_key_id=getenv("aws_access_key_id"),
+  aws_secret_access_key=getenv("aws_secret_access_key"),
+  aws_session_token=getenv("aws_session_token"),
+  region_name=getenv("aws_region_name"))
+
 
 def list_vpcs(vpc_id):
   if vpc_id:
@@ -263,7 +269,7 @@ def create_ec2_full(vpc_id):
 
 
 def create_rds_instance():
-    db_identifier = 'boto3rds'
+    db_identifier = 'database-1'
     try:
         response = rds_client.create_db_instance(
             DBName='boto3db',
@@ -287,6 +293,48 @@ def create_rds_instance():
         else:
             print(f'An error occurred: {e}')
 
+def modify_rds_storage():
+    db_instance_identifier = str(input("Enter the RDS instance identifier: "))
+    try:
+        db_instances = rds_client.describe_db_instances(DBInstanceIdentifier=db_instance_identifier)
+        db_instance = db_instances['DBInstances'][0]
+        current_storage = db_instance['AllocatedStorage']
+        print(f'Current storage size: {current_storage} GB')
+
+        new_storage = int(current_storage * 1.25)
+
+        # Modify the RDS instance to the new storage size
+        rds_client.modify_db_instance(
+            DBInstanceIdentifier=db_instance_identifier,
+            AllocatedStorage=new_storage,
+            ApplyImmediately=True
+        )
+        print("RDS instance storage modified successfully to {} GB.".format(new_storage))
+    except ClientError as e:
+        print(f"An error occurred: {e}")
+
+def create_rds_snapshot():
+    db_instance_identifier = str(input("Enter the RDS instance identifier: "))
+    snapshot_tag = str(input("Enter the snapshot tag: "))
+    DBSnapshotIdentifier=db_instance_identifier + "-" + snapshot_tag
+    try:
+        response = rds_client.create_db_snapshot(
+            DBInstanceIdentifier=db_instance_identifier,
+            DBSnapshotIdentifier=DBSnapshotIdentifier
+        )
+        print(f"Creating RDS snapshot {DBSnapshotIdentifier}")
+    except ClientError as e:
+        print(f"An error occurred: {e}")
+
+def list_dynamodb_tables():
+  try:
+    response = dynamodb_client.list_tables()
+    print("DynamoDB Tables:")
+    for table in response['TableNames']:
+      print(table)
+  except ClientError as e:
+    print(f"An error occurred: {e}")
+
 def argument_list():
   parser = argparse.ArgumentParser(description="List VPCs")
   parser.add_argument("--list", nargs='?', const=None, default=False, help="List VPCs. Provide VPC ID to list a specific VPC.")
@@ -298,6 +346,9 @@ def argument_list():
   parser.add_argument("--detach-igw", nargs=2, help="Detach an Internet Gateway from a VPC", type=str)
   parser.add_argument("--create-ec2", nargs=1, help="Creates an EC2 Instance with Security Group [SSH, HTTP], and KeyPair. Enter VPC ID to begin")
   parser.add_argument("--create-rds", action="store_true", help="Create an RDS instance")
+  parser.add_argument("--modify-rds-storage", action="store_true", help="Modify the storage size of an RDS instance")
+  parser.add_argument("--create-snapshot", action="store_true", help="Create an RDS snapshot")
+  parser.add_argument("--list-dynamodb", action="store_true", help="List DynamoDB tables")
 
   return parser.parse_args()
 
@@ -320,6 +371,12 @@ def main():
       create_ec2_full(args.create_ec2[0])
   elif args.create_rds:
       create_rds_instance()
+  elif args.modify_rds_storage:
+      modify_rds_storage()
+  elif args.create_snapshot:
+      create_rds_snapshot()
+  elif args.list_dynamodb:
+      list_dynamodb_tables()
 
 if __name__ == "__main__":
     args = argument_list()
