@@ -3,6 +3,7 @@ import logging
 import botocore.exceptions
 from botocore.exceptions import ClientError
 import boto3
+import botocore
 import argparse
 from dotenv import load_dotenv
 from os import getenv
@@ -21,6 +22,12 @@ ec2_client = boto3.client(
 
 ec2_resource = boto3.resource(
   'ec2',
+  aws_access_key_id=getenv("aws_access_key_id"),
+  aws_secret_access_key=getenv("aws_secret_access_key"),
+  aws_session_token=getenv("aws_session_token"),
+  region_name=getenv("aws_region_name"))
+
+rds_client = boto3.client('rds',
   aws_access_key_id=getenv("aws_access_key_id"),
   aws_secret_access_key=getenv("aws_secret_access_key"),
   aws_session_token=getenv("aws_session_token"),
@@ -254,6 +261,32 @@ def create_ec2_full(vpc_id):
   except ClientError as e:
     print(f"An error occurred: {e}")
 
+
+def create_rds_instance():
+    db_identifier = 'boto3rds'
+    try:
+        response = rds_client.create_db_instance(
+            DBName='boto3db',
+            DBInstanceIdentifier=db_identifier,
+            DBInstanceClass='db.m5d.large',
+            Engine='mysql',
+            StorageType='gp2',
+            AllocatedStorage=60,
+            MasterUsername='adminalex',
+            MasterUserPassword='password123',
+            VpcSecurityGroupIds=['sg-02b87efddb4ef56b7'],
+            Tags=[
+                {'Key': 'Tag',
+                 'Value': 'RDS Instance created using boto3'}
+            ]
+        )
+        print(f'Starting RDS instance with ID: {db_identifier}')
+    except ClientError as e:
+        if 'DBInstanceAlreadyExists' in str(e):
+            print(f'DB instance {db_identifier} exists already, continuing to poll ...')
+        else:
+            print(f'An error occurred: {e}')
+
 def argument_list():
   parser = argparse.ArgumentParser(description="List VPCs")
   parser.add_argument("--list", nargs='?', const=None, default=False, help="List VPCs. Provide VPC ID to list a specific VPC.")
@@ -264,6 +297,7 @@ def argument_list():
   parser.add_argument("--attach-igw", nargs=2, help="Attach an Internet Gateway to a VPC")
   parser.add_argument("--detach-igw", nargs=2, help="Detach an Internet Gateway from a VPC", type=str)
   parser.add_argument("--create-ec2", nargs=1, help="Creates an EC2 Instance with Security Group [SSH, HTTP], and KeyPair. Enter VPC ID to begin")
+  parser.add_argument("--create-rds", action="store_true", help="Create an RDS instance")
 
   return parser.parse_args()
 
@@ -284,6 +318,8 @@ def main():
       create_subnets(args.create_subnets[0], args.create_subnets[1], args.create_subnets[2])
   elif args.create_ec2:
       create_ec2_full(args.create_ec2[0])
+  elif args.create_rds:
+      create_rds_instance()
 
 if __name__ == "__main__":
     args = argument_list()
